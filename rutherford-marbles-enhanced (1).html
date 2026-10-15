@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rutherford's marble experiment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Dark lab theme. Tokens live on :root; the page is dark by design. */
+  :root {
+    color-scheme: dark;
+    --bg: #0a0f16;
+    --panel: #0e141d;
+    --raised: #141c28;
+    --raised-2: #1a2434;
+    --line: #223045;
+    --line-soft: #1a2535;
+    --text: #e2e8f2;
+    --muted: #8e9bb0;
+    --amber: #ffb347;
+    --ice: #6cc7ff;
+    --coral: #ff6b6b;
+    --mint: #4fe3a0;
+    --focus: #9bd6ff;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: var(--sidebar-width, 390px) minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* ---------- Left panel ---------- */
+  .left {
+    position: relative;
+    min-width: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 26px 26px 44px;
+    min-height: 0;
+  }
+  .left h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+  .sub { color: var(--muted); margin: 0; max-width: 60ch; }
+  .seed { color: var(--muted); font-size: 12px; margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+
+  .left h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 19px;
+    margin: 30px 0 14px;
+  }
+
+  .ctl { margin-bottom: 16px; }
+  .ctl-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+  .ctl label { font-weight: 500; }
+  .numbox { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  input[type="number"] {
+    width: 78px;
+    background: var(--raised);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 5px 8px;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  input[type="range"] { width: 100%; accent-color: var(--amber); margin: 0; height: 22px; }
+
+  .note {
+    min-height: 20px;
+    margin: -4px 0 14px;
+    color: var(--amber);
+    font-size: 13px;
+  }
+
+  .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button {
+    font: inherit;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--raised-2);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 11px 12px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background-color .15s, border-color .15s;
+  }
+  button:hover:not(:disabled) { background: #212d42; border-color: #34475f; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--amber); color: #1b1203; border-color: var(--amber); }
+  button.primary:hover:not(:disabled) { background: #ffc46d; border-color: #ffc46d; }
+  button.toggle[aria-pressed="true"] { background: rgba(79,227,160,.16); border-color: var(--mint); color: var(--mint); }
+  button.ghost { background: transparent; }
+  button svg { width: 16px; height: 16px; flex: none; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .speed { margin-top: 14px; }
+  .speed .ctl-top { margin-bottom: 2px; }
+  .speed output { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .resize-rail {
+    position: absolute; z-index: 8; top: 0; right: -4px; bottom: 0;
+    width: 8px; cursor: col-resize; touch-action: none; background: transparent;
+  }
+  .resize-rail:hover, .resize-rail:focus-visible { background: rgba(108,199,255,.45); }
+  .app.sidebar-collapsed { grid-template-columns: 0 minmax(0, 1fr); }
+  .app.sidebar-collapsed .left {
+    padding: 0; border: 0; overflow: hidden; visibility: hidden; min-width: 0;
+  }
+  .app.sidebar-collapsed .resize-rail { display: none; }
+  .view-tools {
+    position: absolute; z-index: 5; top: 12px; right: 14px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .view-tools button { padding: 7px 10px; border-radius: 8px; background: rgba(14,20,29,.9); }
+  .view-tools .hint { color: var(--muted); font-size: 11px; background: rgba(14,20,29,.75);
+    border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; }
+  .kbd { font: 600 11px var(--sans); color: var(--text); border: 1px solid #52627a;
+    border-radius: 4px; padding: 1px 5px; }
+  /* ---------- Dashboard ---------- */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat {
+    background: var(--raised);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 12px 14px 12px;
+    min-width: 0;
+  }
+  .stat.wide { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .stat .lbl { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+  .stat .val {
+    font-family: var(--serif);
+    font-size: 27px;
+    line-height: 1.2;
+    margin-top: 4px;
+    font-variant-numeric: lining-nums tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .stat.wide .val { margin-top: 0; font-size: 21px; }
+  .val.bad { color: var(--coral); }
+  .val.good { color: var(--mint); }
+
+  .summary {
+    margin: 14px 0 0;
+    padding: 12px 15px;
+    border-left: 3px solid var(--amber);
+    background: rgba(255,179,71,.06);
+    border-radius: 0 9px 9px 0;
+    line-height: 1.6;
+    max-width: 68ch;
+  }
+  .summary b { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .chart-head { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 18px 0 8px; color: var(--muted); font-size: 12.5px; }
+  .chart-head span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw-dash { width: 20px; height: 0; border-top: 2px dashed #dbe3ef; }
+  .sw-line { width: 20px; height: 0; border-top: 3px solid var(--amber); }
+  .sw-band { width: 18px; height: 11px; background: rgba(79,227,160,.28); border: 1px solid rgba(79,227,160,.6); border-radius: 2px; }
+  .chart-wrap {
+    position: relative;
+    height: 270px;
+    background: var(--raised);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+  }
+  .chart-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .disclaimer { color: var(--muted); font-size: 13px; margin: 16px 0 0; max-width: 62ch; }
+
+  /* ---------- Right panel ---------- */
+  .right { display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; min-width: 0; }
+  .right.side-view-collapsed { grid-template-rows: minmax(0, 1fr); }
+  .right.side-view-collapsed .view + .view { display: none; }
+  .view { position: relative; min-height: 0; overflow: hidden; background: #0a1017; }
+  .view + .view { border-top: 1px solid var(--line); }
+  .view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .tag {
+    position: absolute; left: 14px; top: 12px;
+    font-size: 12.5px; font-weight: 500;
+    color: var(--text);
+    background: rgba(14,20,29,.82);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 11px;
+    pointer-events: none;
+  }
+
+  @media (max-width: 880px) {
+    .resize-rail { display: none; }
+    .app.sidebar-collapsed { display: flex; }
+    .app.sidebar-collapsed .left { display: none; }
+    html, body { height: auto; }
+    .app { display: flex; flex-direction: column; height: auto; }
+    .right { order: -1; height: 78vh; min-height: 460px; }
+    .left { overflow: visible; border-right: 0; border-top: 1px solid var(--line); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="left" id="left">
+    <div class="resize-rail" id="resizeRail" role="separator" aria-orientation="vertical" aria-label="Resize controls sidebar" tabindex="0"></div>
+    <h1>Rutherford's marble experiment</h1>
+    <p class="sub">Measure the size of a marble without seeing the board: roll marbles at it and count how often they hit.</p>
+    <p class="seed" id="seedLine"></p>
+
+    <h2>Controls</h2>
+
+    <div class="ctl">
+      <div class="ctl-top">
+        <label for="nNum">Target marbles (N)</label>
+        <span class="numbox"><input id="nNum" type="number" inputmode="decimal" min="1" max="60" step="any" value="6"></span>
+      </div>
+      <input id="nRange" type="range" min="1" max="60" step="1" value="6" aria-label="Target marbles (N) slider">
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-top">
+        <label for="dNum">Marble diameter (D)</label>
+        <span class="numbox"><input id="dNum" type="number" inputmode="decimal" min="0.5" max="6" step="any" value="2.0"> cm</span>
+      </div>
+      <input id="dRange" type="range" min="0.5" max="6" step="0.1" value="2" aria-label="Marble diameter (D) slider">
+    </div>
+
+    <div class="ctl">
+      <div class="ctl-top">
+        <label for="lNum">Target area width (L)</label>
+        <span class="numbox"><input id="lNum" type="number" inputmode="decimal" min="40" max="300" step="any" value="100"> cm</span>
+      </div>
+      <input id="lRange" type="range" min="40" max="300" step="5" value="100" aria-label="Target area width (L) slider">
+    </div>
+
+    <div class="note" id="densityNote" aria-live="polite"></div>
+
+    <div class="buttons">
+      <button class="primary" id="btnSingle" type="button">Single roll <span class="kbd">R</span></button>
+      <button id="btn50" type="button">Roll 50×</button>
+      <button class="toggle" id="btnAuto" type="button" aria-pressed="false">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.5 3l6 5-6 5V3zm7 0l6 5-6 5V3z"/></svg>
+        <span id="autoLabel">Auto-run (fast forward)</span>
+      </button>
+      <button class="ghost" id="btnReset" type="button">Reset</button>
+    </div>
+
+    <div class="ctl speed">
+      <div class="ctl-top">
+        <label for="speedRange">Auto-run speed</label>
+        <output id="speedOut" for="speedRange">30 rolls per frame</output>
+      </div>
+      <input id="speedRange" type="range" min="1" max="300" step="1" value="30">
+    </div>
+
+    <h2>Live data</h2>
+
+    <div class="stats" role="group" aria-label="Live statistics">
+      <div class="stat"><div class="lbl">Hits (H)</div><div class="val" id="sH">0</div></div>
+      <div class="stat"><div class="lbl">Valid rolls (T)</div><div class="val" id="sT">0</div></div>
+      <div class="stat"><div class="lbl">Theoretical P = 2ND/L</div><div class="val" id="sPth">—</div></div>
+      <div class="stat"><div class="lbl">Experimental P = H/T</div><div class="val" id="sPexp">—</div></div>
+      <div class="stat"><div class="lbl">Estimated D = H·L / (2·N·T)</div><div class="val" id="sEst">—</div></div>
+      <div class="stat"><div class="lbl">Error vs true D</div><div class="val" id="sErr">—</div></div>
+      <div class="stat wide"><div class="lbl">Wall rolls (discarded)</div><div class="val" id="sWall">0</div></div>
+    </div>
+
+    <p class="summary" id="summary"></p>
+
+    <div class="chart-head" aria-hidden="true">
+      <span><i class="sw-dash"></i>True D</span>
+      <span><i class="sw-line"></i>Estimated D</span>
+      <span><i class="sw-band"></i>±1σ expected error</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="Estimated D against number of valid rolls, with the expected error funnel around the true D"></canvas></div>
+
+    <p class="disclaimer">The formula assumes the 2D-wide shadows of targets don't overlap; dense boards bias the estimate low.</p>
+  </aside>
+
+  <main class="right">
+    <section class="view">
+      <canvas id="cTop"></canvas><div class="tag">Top view</div>
+      <div class="view-tools"><button id="sidebarToggle" type="button" aria-expanded="true" aria-controls="left">Hide controls ◀</button><button id="sideViewToggle" type="button" aria-expanded="true" aria-controls="c45">Hide 45° view ↓</button><span class="hint">Single roll: <span class="kbd">R</span></span></div>
+    </section>
+    <section class="view"><canvas id="c45"></canvas><div class="tag">45° view</div></section>
+  </main>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   Mersenne Twister MT19937 (32-bit), used for every random draw
+   ===================================================================== */
+class MersenneTwister {
+  constructor(seed) {
+    this.mt = new Uint32Array(624);
+    this.idx = 624;
+    this.seed(seed);
+  }
+  seed(s) {
+    const mt = this.mt;
+    mt[0] = s >>> 0;
+    for (let i = 1; i < 624; i++) {
+      const prev = mt[i - 1] ^ (mt[i - 1] >>> 30);
+      mt[i] = (Math.imul(1812433253, prev) + i) >>> 0;
+    }
+    this.idx = 624;
+  }
+  twist() {
+    const mt = this.mt, N = 624, M = 397;
+    for (let k = 0; k < N; k++) {
+      const y = (mt[k] & 0x80000000) | (mt[(k + 1) % N] & 0x7fffffff);
+      let v = mt[(k + M) % N] ^ (y >>> 1);
+      if (y & 1) v ^= 0x9908b0df;
+      mt[k] = v >>> 0;
+    }
+    this.idx = 0;
+  }
+  nextInt() {
+    if (this.idx >= 624) this.twist();
+    let y = this.mt[this.idx++];
+    y ^= y >>> 11;
+    y ^= (y << 7) & 0x9d2c5680;
+    y ^= (y << 15) & 0xefc60000;
+    y ^= y >>> 18;
+    return y >>> 0;
+  }
+  /** Uniform float in [0, 1) with 53-bit resolution. */
+  random() {
+    const a = this.nextInt() >>> 5, b = this.nextInt() >>> 6;
+    return (a * 67108864 + b) / 9007199254740992;
+  }
+}
+
+function freshSeed() {
+  try { return crypto.getRandomValues(new Uint32Array(1))[0]; }
+  catch (e) { return (Date.now() ^ Math.floor(performance.now() * 1000)) >>> 0; }
+}
+
+/* =====================================================================
+   Simulation model
+   World units are cm. Shooter (point source) at the origin, firing along +x.
+   The board spans x in [X0, X0+L] (depth) and y in [-L/2, L/2] (width).
+   ===================================================================== */
+const DEPTH_K = 1.4;        // board starts at X0 = 1.4 L from the shooter
+const WALL_MARGIN = 0.15;   // firing cone is 15% wider than L; rolls outside L are wall rolls
+const FADE = 1300;          // ms trail fade
+const MAXTRAILS = 240;
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const cfg = { N: 6, D: 2, L: 100, speed: 30 };
+let seed = freshSeed();
+let rng = new MersenneTwister(seed);
+let S = null;          // simulation state
+let auto = false;
+let dirty = true;
+
+function newSim() {
+  const { N, D, L } = cfg;
+  const X0 = DEPTH_K * L;
+  const targets = [];
+  for (let i = 0; i < N; i++) {
+    let x, y, ok, tries = 0;
+    do {
+      x = X0 + rng.random() * L;          // depth: fully random inside the box
+      y = (rng.random() - 0.5) * L;       // width: fully random inside the box
+      ok = true;
+      for (const t of targets) {          // real marbles cannot overlap
+        const dx = t.x - x, dy = t.y - y;
+        if (dx * dx + dy * dy < D * D) { ok = false; break; }
+      }
+      tries++;
+    } while (!ok && tries < 300);
+    targets.push({ x, y, hits: 0 });
+  }
+  S = { X0, xc: X0 + L / 2, targets, H: 0, T: 0, W: 0, hist: [], nextRec: 1,
+        trails: [], pending: null, queue: 0, maxHits: 0 };
+  dirty = true;
+}
+
+/**
+ * One roll. The angle comes from a uniform lateral position at the board's
+ * centre plane (theta = atan(yc / xc)), so the cone covers L evenly and the
+ * point source behaves almost like parallel rolls. Rolls aimed outside L
+ * (up to 15% past each edge) hit the walls and are discarded.
+ */
+function computeRoll() {
+  const { D, L } = cfg;
+  const { X0, xc, targets } = S;
+  const K = (L / 2) * (1 + WALL_MARGIN);
+  const yc = (rng.random() * 2 - 1) * K;
+  const theta = Math.atan2(yc, xc);
+  const ux = Math.cos(theta), uy = Math.sin(theta);
+
+  if (Math.abs(yc) > L / 2) {
+    return { kind: 'wall', theta, ux, uy, tEnd: (L / 2) / Math.abs(uy), target: -1 };
+  }
+  const D2 = D * D;
+  let best = Infinity, bi = -1;
+  for (let i = 0; i < targets.length; i++) {
+    const t = targets[i];
+    const along = t.x * ux + t.y * uy;
+    if (along <= 0) continue;
+    const perp = t.x * uy - t.y * ux;
+    const p2 = perp * perp;
+    if (p2 <= D2) {                       // centre passes within D of a target centre
+      const d = along - Math.sqrt(D2 - p2);
+      if (d < best) { best = d; bi = i; }
+    }
+  }
+  if (bi >= 0) return { kind: 'hit', theta, ux, uy, tEnd: best, target: bi };
+  return { kind: 'miss', theta, ux, uy, tEnd: (X0 + L * 1.1) / ux, target: -1 };
+}
+
+// Visual-only post-impact response: targets remain fixed and hit statistics stay unchanged.
+function addBounce(r) {
+  if (r.kind !== 'hit') return r;
+  const t = S.targets[r.target];
+  const px = r.tEnd * r.ux, py = r.tEnd * r.uy;
+  let nx = px - t.x, ny = py - t.y;
+  const nm = Math.hypot(nx, ny) || 1; nx /= nm; ny /= nm;
+  const dot = r.ux * nx + r.uy * ny;
+  let ox = r.ux - 2 * dot * nx, oy = r.uy - 2 * dot * ny;
+  const om = Math.hypot(ox, oy) || 1; ox /= om; oy /= om;
+  // Add a modest random deflection to represent the variability of a real marble collision.
+  const jitter = (rng.random() * 2 - 1) * (Math.PI / 7);
+  const c = Math.cos(jitter), sn = Math.sin(jitter);
+  r.outUx = ox * c - oy * sn; r.outUy = ox * sn + oy * c;
+  r.bounceLen = cfg.L * (0.28 + rng.random() * 0.24);
+  return r;
+}
+
+function estD() { return S.T ? S.H * cfg.L / (2 * cfg.N * S.T) : 0; }
+
+function applyResult(r) {
+  if (r.kind === 'wall') { S.W++; dirty = true; return; }
+  S.T++;
+  if (r.kind === 'hit') {
+    S.H++;
+    const t = S.targets[r.target];
+    t.hits++;
+    if (t.hits > S.maxHits) S.maxHits = t.hits;
+  }
+  if (S.T <= 2000 || S.T >= S.nextRec) {
+    S.hist.push([S.T, estD()]);
+    if (S.T > 2000) S.nextRec = Math.ceil(S.T * 1.01);
+  }
+  dirty = true;
+}
+
+function flushPending(now) {
+  if (S.pending) {
+    applyResult(S.pending);
+    S.pending.t0 = S.pending.t1 = now;
+    S.pending = null;
+  }
+}
+
+function fire(count, now) {
+  flushPending(now);
+  for (let i = 0; i < count; i++) {
+    const r = addBounce(computeRoll());
+    applyResult(r);
+    r.t0 = r.t1 = now;
+    S.trails.push(r);
+  }
+  if (S.trails.length > MAXTRAILS) S.trails.splice(0, S.trails.length - MAXTRAILS);
+}
+
+function singleRoll() {
+  const now = performance.now();
+  flushPending(now);
+  const r = addBounce(computeRoll());
+  const travel = r.tEnd + (r.bounceLen || 0);
+  const dur = reduceMotion ? 0 : 360 + 380 * (travel / (S.X0 + cfg.L));
+  r.t0 = now; r.t1 = now + dur; r.single = true;
+  S.trails.push(r);
+  if (dur === 0) applyResult(r); else S.pending = r;
+}
+
+function step(now) {
+  if (S.pending && now >= S.pending.t1) { applyResult(S.pending); S.pending = null; }
+  if (S.queue > 0) {
+    const n = Math.min(S.queue, Math.max(1, Math.ceil(S.queue / 20)));
+    fire(n, now);
+    S.queue -= n;
+  }
+  if (auto) fire(cfg.speed, now);
+  const tr = S.trails;
+  let w = 0;
+  for (let i = 0; i < tr.length; i++) if (now - tr[i].t1 <= FADE) tr[w++] = tr[i];
+  tr.length = w;
+}
+
+/* =====================================================================
+   Canvas plumbing
+   ===================================================================== */
+function makeView(id, pitch) {
+  const canvas = document.getElementById(id);
+  const v = { canvas, ctx: canvas.getContext('2d'), p: pitch, lift: pitch === 1 ? 0 : Math.SQRT1_2, w: 0, h: 0, s: 1, ox: 0, oy: 0 };
+  return v;
+}
+function sizeCanvas(v) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = v.canvas.getBoundingClientRect();
+  v.w = Math.max(1, Math.round(r.width));
+  v.h = Math.max(1, Math.round(r.height));
+  v.canvas.width = Math.round(v.w * dpr);
+  v.canvas.height = Math.round(v.h * dpr);
+  v.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dirty = true;
+}
+
+const topView = makeView('cTop', 1);
+const v45 = makeView('c45', Math.SQRT1_2);   // sin(45°): the whole 45° view is the top view with Y squashed
+const chart = makeView('chart', 1);
+
+const ro = new ResizeObserver(() => { sizeCanvas(topView); sizeCanvas(v45); sizeCanvas(chart); });
+[topView, v45, chart].forEach(v => ro.observe(v.canvas));
+
+function layoutView(v) {
+  const L = cfg.L;
+  const ML = 0.14 * L, MR = 0.2 * L, MY = 0.13 * L;
+  const worldW = ML + S.X0 + L + MR;
+  const worldH = L + 2 * MY;
+  v.s = Math.min(v.w / worldW, v.h / worldH);     // same scale in both views
+  v.ox = (v.w - worldW * v.s) / 2 + ML * v.s;
+  v.oy = v.h / 2;
+}
+/** world (x, y, z) to screen; y is squashed by sin(45°) and z lifts by cos(45°) in the pitched view */
+const P3 = (v, x, y, z = 0) => [v.ox + x * v.s, v.oy + y * v.s * v.p - z * v.s * v.lift];
+
+const PAL = {
+  target: ['#e3f6ff', '#62b9f2', '#1b5a93'],
+  struck: ['#ffe6dd', '#ff8c7c', '#a13838'],
+  shot:   ['#fff2d2', '#ffb347', '#a1601a'],
+};
+const FONT = '500 11.5px "IBM Plex Sans", system-ui, sans-serif';
+
+function drawMarble(v, x, y, r, cols, alpha = 1) {
+  const ctx = v.ctx;
+  const [fx, fy] = P3(v, x, y, 0);
+  const [cx, cy] = P3(v, x, y, r);
+  const rp = r * v.s;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  // soft shadow on the board
+  ctx.fillStyle = 'rgba(0,0,0,0.38)';
+  ctx.beginPath();
+  if (v.p === 1) ctx.arc(cx + rp * 0.2, cy + rp * 0.24, rp, 0, 6.2832);
+  else ctx.ellipse(fx + rp * 0.22, fy + rp * 0.06, rp, rp * v.p, 0, 0, 6.2832);
+  ctx.fill();
+  // glass sphere
+  const g = ctx.createRadialGradient(cx - rp * 0.35, cy - rp * 0.4, rp * 0.08, cx, cy, rp);
+  g.addColorStop(0, cols[0]); g.addColorStop(0.45, cols[1]); g.addColorStop(1, cols[2]);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, rp, 0, 6.2832); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
+}
+
+function niceStep(raw) {
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const k of [1, 2, 5, 10]) if (k * pow >= raw) return k * pow;
+  return 10 * pow;
+}
+
+function drawShooter(v) {
+  const ctx = v.ctx, L = cfg.L, s = v.s, p = v.p;
+  const xs = -0.05 * L, rx = 0.03 * L, ry = 0.09 * L, zs = 0.12 * L, headR = 0.034 * L;
+  const sil = '#1d2a3c', edge = '#4a6185', headC = '#27384f';
+  ctx.save();
+  ctx.lineCap = 'round';
+  if (p === 1) {
+    const [ax, ay] = P3(v, xs + 0.01 * L, 0.075 * L);
+    const [hx, hy] = P3(v, -0.004 * L, 0.012 * L);
+    ctx.strokeStyle = sil; ctx.lineWidth = 0.034 * L * s;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(hx, hy); ctx.stroke();
+    const [cx, cy] = P3(v, xs, 0);
+    ctx.fillStyle = sil; ctx.strokeStyle = edge; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx * s, ry * s, 0, 0, 6.2832); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = headC;
+    ctx.beginPath(); ctx.arc(cx + rx * s * 0.15, cy, headR * s, 0, 6.2832); ctx.fill(); ctx.stroke();
+  } else {
+    const [fx, fy] = P3(v, xs, 0, 0);
+    const [tx, ty] = P3(v, xs, 0, zs);
+    const rxp = rx * s, ryp = ry * s * p;
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.beginPath(); ctx.ellipse(fx + rxp * 0.5, fy + ryp * 0.08, rxp * 1.15, ryp * 1.05, 0, 0, 6.2832); ctx.fill();
+    // arm
+    const [ax, ay] = P3(v, xs + 0.01 * L, 0.075 * L, zs * 0.95);
+    const [hx, hy] = P3(v, -0.004 * L, 0.012 * L, 0.05 * L);
+    ctx.strokeStyle = sil; ctx.lineWidth = 0.034 * L * s;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(hx, hy); ctx.stroke();
+    // torso: floor ellipse, body, shoulder ellipse
+    ctx.fillStyle = sil;
+    ctx.beginPath(); ctx.ellipse(fx, fy, rxp, ryp, 0, 0, 6.2832); ctx.fill();
+    ctx.fillRect(fx - rxp, ty, 2 * rxp, fy - ty);
+    ctx.strokeStyle = edge; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(fx - rxp, ty); ctx.lineTo(fx - rxp, fy); ctx.moveTo(fx + rxp, ty); ctx.lineTo(fx + rxp, fy); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(tx, ty, rxp, ryp, 0, 0, 6.2832); ctx.fill(); ctx.stroke();
+    // head
+    const [hdx, hdy] = P3(v, xs, 0, zs + headR * 1.5);
+    ctx.fillStyle = headC;
+    ctx.beginPath(); ctx.arc(hdx, hdy, headR * s, 0, 6.2832); ctx.fill(); ctx.stroke();
+  }
+  ctx.fillStyle = '#8e9bb0'; ctx.font = FONT; ctx.textAlign = 'center';
+  const [lx, ly] = P3(v, xs, 0.14 * L, 0);
+  ctx.fillText('shooter', lx, ly + (p === 1 ? 0 : 6));
+  ctx.restore();
+}
+
+function drawScene(v, now) {
+  if (!v.w) return;
+  layoutView(v);
+  const ctx = v.ctx, { L, D } = cfg, R = D / 2, s = v.s, p = v.p;
+  const { X0, xc, targets } = S;
+
+  ctx.clearRect(0, 0, v.w, v.h);
+  const bg = ctx.createLinearGradient(0, 0, 0, v.h);
+  bg.addColorStop(0, '#0c131b'); bg.addColorStop(1, '#091017');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, v.w, v.h);
+
+  /* --- target board --- */
+  const [bx0, by0] = P3(v, X0, -L / 2);
+  const [bx1, by1] = P3(v, X0 + L, L / 2);
+  if (p !== 1) {
+    const th = 0.04 * L * s * v.lift;
+    ctx.fillStyle = '#0b121a'; ctx.fillRect(bx0, by1, bx1 - bx0, th);
+    ctx.strokeStyle = '#2a3b52'; ctx.lineWidth = 1;
+    ctx.strokeRect(bx0 + 0.5, by1 + 0.5, bx1 - bx0 - 1, th - 1);
+  }
+  const bg2 = ctx.createLinearGradient(0, by0, 0, by1);
+  bg2.addColorStop(0, '#142230'); bg2.addColorStop(1, '#0f1a25');
+  ctx.fillStyle = bg2; ctx.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
+  const g = niceStep(L / 10);
+  ctx.strokeStyle = 'rgba(120,165,215,0.09)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let k = 1; k * g < L; k++) {
+    const [gx] = P3(v, X0 + k * g, 0); ctx.moveTo(Math.round(gx) + 0.5, by0); ctx.lineTo(Math.round(gx) + 0.5, by1);
+    const [, gy] = P3(v, 0, -L / 2 + k * g); ctx.moveTo(bx0, Math.round(gy) + 0.5); ctx.lineTo(bx1, Math.round(gy) + 0.5);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = '#34495f'; ctx.lineWidth = 1.2;
+  ctx.strokeRect(bx0, by0, bx1 - bx0, by1 - by0);
+  ctx.fillStyle = '#6b7a90'; ctx.font = FONT; ctx.textAlign = 'left';
+  ctx.fillText('grid ' + g + ' cm', bx0, by1 + (p === 1 ? 16 : 0.04 * L * s * v.lift + 16));
+
+  /* --- rectangular playing lane: visual guide only; simulation geometry is unchanged --- */
+   const laneEnd = X0 + L * 1.1;
+   const laneCorners = [
+     P3(v, 0, -L / 2), P3(v, laneEnd, -L / 2),
+     P3(v, laneEnd, L / 2), P3(v, 0, L / 2)
+   ];
+   ctx.beginPath();
+   laneCorners.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+   ctx.closePath();
+   ctx.fillStyle = 'rgba(108,199,255,0.045)'; ctx.fill();
+   ctx.strokeStyle = 'rgba(108,199,255,0.30)'; ctx.lineWidth = 1.2;
+   ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+   const [laneLabelX, laneLabelY] = P3(v, laneEnd * 0.56, -L / 2);
+   ctx.fillStyle = '#8ebcda'; ctx.font = FONT; ctx.textAlign = 'center';
+   ctx.fillText('PLAYING LANE · width L', laneLabelX, laneLabelY - 9);
+
+   /* --- hit zones: a projectile centre inside radius D around a target is a hit --- */
+  ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(108,199,255,0.26)'; ctx.lineWidth = 1;
+  for (const t of targets) {
+    const [zx, zy] = P3(v, t.x, t.y, 0);
+    ctx.beginPath(); ctx.ellipse(zx, zy, D * s, D * s * p, 0, 0, 6.2832); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  /* --- trails --- */
+  const flying = [], landed = [], rings = [];
+  const [sx0, sy0] = P3(v, 0, 0, R);
+  ctx.lineCap = 'round';
+  for (const tr of S.trails) {
+    const age = now - tr.t1;
+    const a = age <= 0 ? 1 : 1 - age / FADE;
+    if (a <= 0) continue;
+    let len = tr.tEnd;
+    let projectile = null;
+    if (now < tr.t1) {
+      const f = Math.min(1, Math.max(0, (now - tr.t0) / (tr.t1 - tr.t0)));
+      const eased = 1 - Math.pow(1 - f, 1.8);
+      const total = tr.tEnd + (tr.bounceLen || 0);
+      const distance = total * eased;
+      if (tr.kind === 'hit' && tr.bounceLen && distance > tr.tEnd) {
+        const bd = distance - tr.tEnd;
+        projectile = [tr.tEnd * tr.ux + bd * tr.outUx, tr.tEnd * tr.uy + bd * tr.outUy];
+      } else {
+        len = Math.min(tr.tEnd, distance);
+        projectile = [len * tr.ux, len * tr.uy];
+      }
+      flying.push(projectile);
+    } else if (tr.single && tr.kind !== 'wall') {
+      landed.push([tr, a]);
+    }
+    const ex = tr.tEnd * tr.ux, ey = tr.tEnd * tr.uy;
+    const [x1, y1] = P3(v, ex, ey, R);
+    if (tr.kind === 'hit') { ctx.strokeStyle = `rgba(255,107,107,${a * 0.85})`; ctx.lineWidth = 1.6; }
+    else if (tr.kind === 'miss') { ctx.strokeStyle = `rgba(255,179,71,${a * 0.5})`; ctx.lineWidth = 1; }
+    else { ctx.strokeStyle = `rgba(142,155,176,${a * 0.5})`; ctx.lineWidth = 1; }
+    ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(x1, y1); ctx.stroke();
+    if (tr.kind === 'hit' && tr.bounceLen) {
+      const [ox, oy] = P3(v, ex + tr.bounceLen * tr.outUx, ey + tr.bounceLen * tr.outUy, R);
+      ctx.strokeStyle = `rgba(255,107,107,${a * 0.72})`; ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(ox, oy); ctx.stroke(); ctx.setLineDash([]);
+    }
+    if (tr.kind === 'wall' && age >= 0) {
+      ctx.fillStyle = `rgba(142,155,176,${a * 0.8})`;
+      ctx.beginPath(); ctx.arc(x1, y1, 2.2, 0, 6.2832); ctx.fill();
+    }
+    if (tr.kind === 'hit' && age >= 0 && age < 500 && !reduceMotion) rings.push([tr, age]);
+  }
+
+  /* --- targets (far to near so the 45° view overlaps correctly) --- */
+  const order = targets.slice().sort((a, b) => a.y - b.y);
+  for (const t of order) {
+    drawMarble(v, t.x, t.y, R, t.hits ? PAL.struck : PAL.target);
+  }
+
+  /* --- impact rings --- */
+  for (const [tr, age] of rings) {
+    const t = targets[tr.target];
+    const ex = tr.tEnd * tr.ux, ey = tr.tEnd * tr.uy;
+    const [cx, cy] = P3(v, t.x + (ex - t.x) * 0.5, t.y + (ey - t.y) * 0.5, R);
+    ctx.strokeStyle = `rgba(255,140,124,${0.85 * (1 - age / 500)})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R * s * (0.7 + age / 200), 0, 6.2832); ctx.stroke();
+  }
+
+  /* --- shooter, resting marble, marbles in flight --- */
+  drawShooter(v);
+  drawMarble(v, 0, 0, R, PAL.shot);
+  for (const [fx, fy] of flying) drawMarble(v, fx, fy, R, PAL.shot);
+  for (const [tr, a] of landed) {
+    const lx = tr.tEnd * tr.ux + (tr.bounceLen || 0) * (tr.outUx || 0);
+    const ly = tr.tEnd * tr.uy + (tr.bounceLen || 0) * (tr.outUy || 0);
+    drawMarble(v, lx, ly, R, PAL.shot, Math.max(0, a));
+  }
+
+  /* --- dimension line for L --- */
+  const xd = X0 + L + 0.07 * L;
+  const [dx, dy0] = P3(v, xd, -L / 2), [, dy1] = P3(v, xd, L / 2);
+  ctx.strokeStyle = '#8e9bb0'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(dx, dy0); ctx.lineTo(dx, dy1);
+  ctx.moveTo(dx - 4, dy0); ctx.lineTo(dx + 4, dy0);
+  ctx.moveTo(dx - 4, dy1); ctx.lineTo(dx + 4, dy1);
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(dx + 15, (dy0 + dy1) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#b8c3d4'; ctx.font = FONT; ctx.textAlign = 'center';
+  ctx.fillText('L = ' + fmtNum(L) + ' cm', 0, 0);
+  ctx.restore();
+}
+
+/* =====================================================================
+   Live chart: estimated D vs valid rolls (log x), with the ±1σ funnel
+   ===================================================================== */
+function niceXMax(T) {
+  for (let e = 3; e < 12; e++) for (const k of [1, 2, 5]) {
+    const val = k * Math.pow(10, e);
+    if (val >= T) return val;
+  }
+  return 1e12;
+}
+const fmtNum = x => String(+x.toFixed(2));
+const fmtInt = n => n.toLocaleString('en-US');
+
+function drawChart() {
+  const c = chart;
+  if (!c.w) return;
+  const ctx = c.ctx, W = c.w, H = c.h;
+  ctx.clearRect(0, 0, W, H);
+
+  const padL = 50, padR = 16, padT = 14, padB = 38;
+  const pw = W - padL - padR, ph = H - padT - padB;
+  const { N, D, L } = cfg;
+  const yMax = 2 * D;
+  const xMax = niceXMax(S.T);
+  const lx = Math.log10(xMax);
+  const X = T => padL + (Math.log10(Math.max(1, T)) / lx) * pw;
+  const Y = v => padT + ph - (v / yMax) * ph;
+
+  ctx.font = '11px "IBM Plex Sans", system-ui, sans-serif';
+  ctx.lineWidth = 1;
+
+  // horizontal grid + y labels
+  ctx.textAlign = 'right'; ctx.fillStyle = '#8e9bb0';
+  for (let i = 0; i <= 4; i++) {
+    const val = (yMax * i) / 4, y = Math.round(Y(val)) + 0.5;
+    ctx.strokeStyle = i === 0 ? '#34475f' : 'rgba(120,150,190,0.13)';
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + pw, y); ctx.stroke();
+    ctx.fillText(fmtNum(val), padL - 7, y + 4);
+  }
+  // vertical grid + x labels (decades)
+  ctx.textAlign = 'center';
+  let lastLabelX = -1e9;
+  for (let e = 0; Math.pow(10, e) <= xMax * 1.0001; e++) {
+    const base = Math.pow(10, e);
+    const x = Math.round(X(base)) + 0.5;
+    ctx.strokeStyle = 'rgba(120,150,190,0.18)';
+    ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + ph); ctx.stroke();
+    ctx.fillStyle = '#8e9bb0';
+    ctx.fillText(fmtInt(base), x, padT + ph + 16);
+    lastLabelX = x;
+    for (let m = 2; m <= 9; m++) {
+      const v = base * m; if (v > xMax) break;
+      const mx = Math.round(X(v)) + 0.5;
+      ctx.strokeStyle = 'rgba(120,150,190,0.3)';
+      ctx.beginPath(); ctx.moveTo(mx, padT + ph); ctx.lineTo(mx, padT + ph + 3); ctx.stroke();
+    }
+  }
+  if (Math.log10(xMax) % 1 > 1e-9 && padL + pw - lastLabelX > 42) {
+    ctx.fillStyle = '#8e9bb0';
+    ctx.fillText(fmtInt(xMax), padL + pw - 4, padT + ph + 16);
+  }
+  ctx.fillStyle = '#8e9bb0'; ctx.textAlign = 'center';
+  ctx.fillText('Valid rolls T (log scale)', padL + pw / 2, H - 7);
+  ctx.save();
+  ctx.translate(13, padT + ph / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Estimated D (cm)', 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(padL, padT, pw, ph); ctx.clip();
+
+  // ±1σ funnel around the true D: sigma_D = D * sqrt((1 - P) / (P T))
+  const Pc = Math.min(2 * N * D / L, 0.999);
+  const M = 200, up = [], lo = [];
+  for (let i = 0; i <= M; i++) {
+    const T = Math.pow(10, (lx * i) / M);
+    const sg = D * Math.sqrt((1 - Pc) / (Pc * T));
+    up.push([X(T), Y(Math.min(yMax, D + sg))]);
+    lo.push([X(T), Y(Math.max(0, D - sg))]);
+  }
+  ctx.beginPath();
+  up.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+  for (let i = lo.length - 1; i >= 0; i--) ctx.lineTo(lo[i][0], lo[i][1]);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(79,227,160,0.16)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(79,227,160,0.55)'; ctx.lineWidth = 1;
+  ctx.beginPath(); up.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+  ctx.beginPath(); lo.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+
+  // true D
+  ctx.setLineDash([7, 5]); ctx.strokeStyle = 'rgba(226,232,242,0.9)'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(padL, Y(D)); ctx.lineTo(padL + pw, Y(D)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // estimated D
+  if (S.T > 0) {
+    const pts = S.hist.slice();
+    const last = pts[pts.length - 1];
+    if (!last || last[0] !== S.T) pts.push([S.T, estD()]);
+    ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    pts.forEach(([T, e], i) => i ? ctx.lineTo(X(T), Y(e)) : ctx.moveTo(X(T), Y(e)));
+    ctx.stroke();
+    const [lt, le] = pts[pts.length - 1];
+    ctx.fillStyle = '#ffb347';
+    ctx.beginPath(); ctx.arc(X(lt), Y(le), 3.6, 0, 6.2832); ctx.fill();
+    ctx.strokeStyle = '#0e141d'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* =====================================================================
+   Dashboard
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const el = { H: $('sH'), T: $('sT'), Pth: $('sPth'), Pexp: $('sPexp'), est: $('sEst'), err: $('sErr'), wall: $('sWall'), summary: $('summary'), note: $('densityNote') };
+
+function updateDash() {
+  const { N, D, L } = cfg, { H, T, W } = S;
+  const Pth = 2 * N * D / L;
+  el.H.textContent = fmtInt(H);
+  el.T.textContent = fmtInt(T);
+  el.wall.textContent = fmtInt(W);
+  el.Pth.textContent = Pth.toFixed(4);
+
+  if (Pth > 1) el.note.textContent = 'The target shadows cover more than the whole board, so the estimate will read far too low.';
+  else if (Pth > 0.35) el.note.textContent = 'Crowded board: target shadows will overlap and pull the estimate low.';
+  else el.note.textContent = '';
+
+  el.err.classList.remove('bad', 'good');
+  if (T === 0) {
+    el.Pexp.textContent = '—'; el.est.textContent = '—'; el.err.textContent = '—';
+    el.summary.innerHTML = 'Roll a marble to begin. After the first valid roll, the estimate, its error, and the expected error at that number of rolls appear here.';
+    return;
+  }
+  const Pexp = H / T;
+  const est = H * L / (2 * N * T);
+  const errPct = (est - D) / D * 100;
+  const Pc = Math.min(Pth, 0.999);
+  const sig = 100 * Math.sqrt((1 - Pc) / (Pc * T));
+  const errTxt = (errPct < 0 ? '−' : '+') + Math.abs(errPct).toFixed(1);
+  el.Pexp.textContent = Pexp.toFixed(4);
+  el.est.textContent = est.toFixed(2) + ' cm';
+  el.err.textContent = errTxt + '%';
+  const bad = errPct < 0 || Math.abs(errPct) > 2 * sig;
+  el.err.classList.add(bad ? 'bad' : 'good');
+  el.summary.innerHTML =
+    `After <b>${fmtInt(T)}</b> valid rolls the estimate is <b>${est.toFixed(2)}</b> cm vs the true <b>${fmtNum(D)}</b> cm: ` +
+    `<b>${errTxt}%</b> error. Expected typical error at this T is about <b>±${sig.toFixed(1)}%</b>. ` +
+    `It shrinks like 1/√T, so 4× the rolls roughly halves it.`;
+}
+
+/* =====================================================================
+   Controls
+   ===================================================================== */
+const params = [
+  { key: 'N', range: $('nRange'), num: $('nNum'), min: 1,   max: 60,  step: 1,   dec: 0 },
+  { key: 'D', range: $('dRange'), num: $('dNum'), min: 0.5, max: 6,   step: 0.1, dec: 1 },
+  { key: 'L', range: $('lRange'), num: $('lNum'), min: 40,  max: 300, step: 5,   dec: 0 },
+];
+
+function boardChanged() {
+  newSim();
+}
+
+params.forEach(pr => {
+  pr.range.addEventListener('input', () => {
+    const v = parseFloat(pr.range.value);
+    cfg[pr.key] = v;
+    pr.num.value = v.toFixed(pr.dec);
+    boardChanged();
+  });
+  pr.num.addEventListener('input', () => {
+    const v = parseFloat(pr.num.value);
+    if (isFinite(v) && v >= pr.min && v <= pr.max) {
+      cfg[pr.key] = v; pr.range.value = v; boardChanged();
+    }
+  });
+  pr.num.addEventListener('change', () => {
+    let v = parseFloat(pr.num.value);
+    if (!isFinite(v)) v = cfg[pr.key];
+    v = Math.min(pr.max, Math.max(pr.min, v));
+    v = +(Math.round(v / pr.step) * pr.step).toFixed(pr.dec);
+    cfg[pr.key] = v; pr.num.value = v.toFixed(pr.dec); pr.range.value = v;
+    boardChanged();
+  });
+});
+
+const btnSingle = $('btnSingle'), btn50 = $('btn50'), btnAuto = $('btnAuto');
+
+const app = document.querySelector('.app');
+const sidebarToggle = $('sidebarToggle');
+const sideViewToggle = $('sideViewToggle');
+const rightPanel = document.querySelector('.right');
+const resizeRail = $('resizeRail');
+let sidebarWidth = 390;
+function setSidebarCollapsed(collapsed) {
+  app.classList.toggle('sidebar-collapsed', collapsed);
+  sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+  sidebarToggle.textContent = collapsed ? 'Show controls ▶' : 'Hide controls ◀';
+  requestAnimationFrame(() => { sizeCanvas(topView); sizeCanvas(v45); sizeCanvas(chart); });
+}
+sidebarToggle.addEventListener('click', () => setSidebarCollapsed(!app.classList.contains('sidebar-collapsed')));
+function setSideViewCollapsed(collapsed) {
+  rightPanel.classList.toggle('side-view-collapsed', collapsed);
+  sideViewToggle.setAttribute('aria-expanded', String(!collapsed));
+  sideViewToggle.textContent = collapsed ? 'Show 45° view ↓' : 'Hide 45° view ↓';
+  requestAnimationFrame(() => { sizeCanvas(topView); sizeCanvas(v45); sizeCanvas(chart); });
+}
+sideViewToggle.addEventListener('click', () => setSideViewCollapsed(!rightPanel.classList.contains('side-view-collapsed')));
+function resizeSidebar(clientX) {
+  const width = Math.max(300, Math.min(620, clientX));
+  sidebarWidth = width;
+  app.style.setProperty('--sidebar-width', width + 'px');
+  sizeCanvas(topView); sizeCanvas(v45); sizeCanvas(chart);
+}
+resizeRail.addEventListener('pointerdown', e => {
+  if (window.matchMedia('(max-width: 880px)').matches) return;
+  resizeRail.setPointerCapture(e.pointerId);
+  const move = ev => resizeSidebar(ev.clientX);
+  const up = () => {
+    resizeRail.removeEventListener('pointermove', move);
+    resizeRail.removeEventListener('pointerup', up);
+    resizeRail.removeEventListener('pointercancel', up);
+  };
+  resizeRail.addEventListener('pointermove', move);
+  resizeRail.addEventListener('pointerup', up);
+  resizeRail.addEventListener('pointercancel', up);
+});
+resizeRail.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    const current = parseFloat(getComputedStyle(app).getPropertyValue('--sidebar-width')) || sidebarWidth;
+    resizeSidebar(Math.max(300, Math.min(620, current + (e.key === 'ArrowRight' ? 20 : -20))));
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  const target = e.target;
+  if (target && (target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(target.tagName))) return;
+  if (e.key.toLowerCase() === 'r' && !auto) { e.preventDefault(); singleRoll(); }
+});
+btnSingle.addEventListener('click', singleRoll);
+btn50.addEventListener('click', () => { flushPending(performance.now()); S.queue += 50; });
+
+function setAuto(on) {
+  auto = on;
+  btnAuto.setAttribute('aria-pressed', String(on));
+  $('autoLabel').textContent = on ? 'Stop auto-run' : 'Auto-run (fast forward)';
+  btnSingle.disabled = on; btn50.disabled = on;
+}
+btnAuto.addEventListener('click', () => setAuto(!auto));
+
+$('btnReset').addEventListener('click', () => {
+  setAuto(false);
+  seed = freshSeed();
+  rng = new MersenneTwister(seed);
+  showSeed();
+  newSim();
+});
+
+const speedRange = $('speedRange');
+speedRange.addEventListener('input', () => {
+  cfg.speed = parseInt(speedRange.value, 10);
+  $('speedOut').textContent = cfg.speed + (cfg.speed === 1 ? ' roll per frame' : ' rolls per frame');
+});
+
+function showSeed() {
+  $('seedLine').textContent = 'Random numbers: Mersenne Twister MT19937, seed 0x' + seed.toString(16).toUpperCase().padStart(8, '0');
+}
+
+/* =====================================================================
+   Main loop
+   ===================================================================== */
+function frame(now) {
+  step(now);
+  drawScene(topView, now);
+  drawScene(v45, now);
+  if (dirty) { updateDash(); drawChart(); dirty = false; }
+  requestAnimationFrame(frame);
+}
+
+showSeed();
+newSim();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
